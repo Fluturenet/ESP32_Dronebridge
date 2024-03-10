@@ -52,6 +52,9 @@ char CURRENT_CLIENT_IP[32] = "192.168.2.1";
 uint8_t DEFAULT_CHANNEL = 6;
 uint8_t SERIAL_PROTOCOL = 4;  // 1=MSP, 4=MAVLink/transparent
 
+char DEFAULT_HOST_IP_ADDR [32] = "192.168.2.1";
+int DEFAULT_PORT = 14550;
+
 // initially set pins to 0 to allow the start of the system on all boards. User has to set the correct pins
 uint8_t DB_UART_PIN_TX = GPIO_NUM_0;
 uint8_t DB_UART_PIN_RX = GPIO_NUM_0;
@@ -324,6 +327,12 @@ int init_wifi_clientmode() {
         return -1;
     }
     ESP_LOGI(TAG, "WiFi client mode enabled and connected!");
+    struct db_udp_client_t default_udp_client={0};
+    default_udp_client.udp_client.sin_addr.s_addr = inet_addr(DEFAULT_HOST_IP_ADDR);
+    default_udp_client.udp_client.sin_family = AF_INET;
+    default_udp_client.udp_client.sin_port = htons(DEFAULT_PORT);
+
+    add_to_known_udp_clients(udp_conn_list,default_udp_client);
     return 0;
 }
 
@@ -354,6 +363,8 @@ void write_settings_to_nvs() {
     ESP_ERROR_CHECK(nvs_set_u16(my_handle, "trans_pack_size", TRANSPARENT_BUF_SIZE));
     ESP_ERROR_CHECK(nvs_set_u8(my_handle, "ltm_per_packet", LTM_FRAME_NUM_BUFFER));
     ESP_ERROR_CHECK(nvs_set_str(my_handle, "ap_ip", DEFAULT_AP_IP));
+    ESP_ERROR_CHECK(nvs_set_str(my_handle, "rem_host", DEFAULT_HOST_IP_ADDR));
+    ESP_ERROR_CHECK(nvs_set_u16(my_handle, "rme_port", DEFAULT_PORT));
     ESP_ERROR_CHECK(nvs_commit(my_handle));
     nvs_close(my_handle);
 }
@@ -399,6 +410,13 @@ void read_settings_nvs() {
         ESP_ERROR_CHECK(nvs_get_u8(my_handle, "proto", &SERIAL_PROTOCOL));
         ESP_ERROR_CHECK(nvs_get_u16(my_handle, "trans_pack_size", &TRANSPARENT_BUF_SIZE));
         ESP_ERROR_CHECK(nvs_get_u8(my_handle, "ltm_per_packet", &LTM_FRAME_NUM_BUFFER));
+
+        ESP_ERROR_CHECK(nvs_get_str(my_handle, "rem_host", NULL, &required_size));
+        char * rem_host = malloc(required_size);
+        ESP_ERROR_CHECK(nvs_get_str(my_handle, "rem_host", &rem_host, &required_size));
+        memcpy(DEFAULT_HOST_IP_ADDR,rem_host,required_size);
+
+        ESP_ERROR_CHECK(nvs_get_u16(my_handle, "rme_port", &DEFAULT_PORT));
         nvs_close(my_handle);
         free(wifi_pass);
         free(ssid);

@@ -46,6 +46,9 @@ extern uint16_t TRANSPARENT_BUF_SIZE;
 extern uint8_t LTM_FRAME_NUM_BUFFER;    // Number of LTM frames per UDP packet (min = 1; max = 5)
 extern int station_rssi;               // updated when ESP32 is in station mode and connected to an access point
 
+extern char DEFAULT_HOST_IP_ADDR [32];
+extern int DEFAULT_PORT;
+
 extern uint32_t uart_byte_count;
 extern int8_t num_connected_tcp_clients;
 extern struct udp_conn_list_t *udp_conn_list;

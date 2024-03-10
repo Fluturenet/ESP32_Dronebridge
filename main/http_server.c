@@ -213,6 +213,14 @@ static esp_err_t settings_change_post_handler(httpd_req_t *req) {
     } else if (json) {
         ESP_LOGE(REST_TAG, "New IP \"%s\" is not a valid IP address! Not changing!", json->valuestring);
     }
+    json = cJSON_GetObjectItem(root, "rem_host");
+    if (json && is_valid_ip4(json->valuestring)) {
+        strncpy(DEFAULT_HOST_IP_ADDR, json->valuestring, sizeof(DEFAULT_HOST_IP_ADDR) - 1);
+    } else if (json) {
+        ESP_LOGE(REST_TAG, "New IP \"%s\" is not a valid IP address! Not changing!", json->valuestring);
+    }
+    json = cJSON_GetObjectItem(root, "rem_port");
+    if (json) DEFAULT_PORT = json->valueint;
     write_settings_to_nvs();
     ESP_LOGI(REST_TAG, "Settings changed!");
     cJSON_Delete(root);
@@ -334,6 +342,8 @@ static esp_err_t settings_data_get_handler(httpd_req_t *req) {
     cJSON_AddNumberToObject(root, "telem_proto", SERIAL_PROTOCOL);
     cJSON_AddNumberToObject(root, "ltm_pp", LTM_FRAME_NUM_BUFFER);
     cJSON_AddStringToObject(root, "ap_ip", DEFAULT_AP_IP);
+    cJSON_AddStringToObject(root, "rem_host", (char *) DEFAULT_HOST_IP_ADDR);
+    cJSON_AddNumberToObject(root, "rem_port",DEFAULT_PORT);
     const char *sys_info = cJSON_Print(root);
     httpd_resp_sendstr(req, sys_info);
     free((void *) sys_info);
